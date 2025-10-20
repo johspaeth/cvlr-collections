@@ -155,6 +155,18 @@ impl<T> NoResizableVec<T> {
         }
         None
     }
+
+    pub fn as_slice(&self) -> &[T] {
+        unsafe {
+            std::slice::from_raw_parts(self.buf.ptr.as_ptr(), self.len)
+        }
+    }
+
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        unsafe {
+            std::slice::from_raw_parts_mut(self.buf.ptr.as_mut(), self.len)
+        }
+    }
 }
 
 impl<T> Drop for NoResizableVec<T> {
@@ -348,6 +360,36 @@ impl<T> IntoIterator for NoResizableVec<T> {
         }
     }
 }
+
+impl<'a, T> IntoIterator for &'a NoResizableVec<T> {
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_slice().iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut NoResizableVec<T> {
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_mut_slice().iter_mut()
+    }
+}
+
+
+impl<T> FromIterator<T> for NoResizableVec<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut vec = NoResizableVec::new();
+        for item in iter {
+            vec.push(item);
+        }
+        vec
+    }
+}
+
 
 ////////////////////
 // Macros
