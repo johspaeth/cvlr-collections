@@ -12,6 +12,7 @@ use std::{
 /////////////////////////
 /// Raw Vec
 /////////////////////////
+#[derive(Debug, Eq, PartialEq)]
 struct RawVec<T> {
     ptr: NonNull<T>,
     cap: usize,
@@ -59,12 +60,25 @@ impl<T> Drop for RawVec<T> {
 /////////////////////////
 /// NoResizableVec
 /////////////////////////
+#[derive(Debug, Eq, PartialEq)]
 pub struct NoResizableVec<T> {
     buf: RawVec<T>,
     len: usize,
 }
 
+impl<T> Default for NoResizableVec<T>{
+    fn default() -> Self {
+        Self::new_zero_sized()
+    }
+}
+
 impl<T> NoResizableVec<T> {
+    
+    pub fn new_zero_sized() -> Self {
+        //Set default capacity to 10
+        Self::new(10)
+    }
+
     pub fn new(capacity: usize) -> Self {
         Self {
             buf: RawVec::new(capacity),
