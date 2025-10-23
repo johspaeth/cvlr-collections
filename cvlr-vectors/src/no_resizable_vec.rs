@@ -246,19 +246,36 @@ impl<T> IndexMut<usize> for NoResizableVec<T> {
 pub mod borsh0_9 {
     use super::*;
 
-    impl<T> ::borsh0_9::BorshSerialize for NoResizableVec<T> {
-        // Not implemented
-        fn serialize<W: Write>(&self, _writer: &mut W) -> Result<()> {
-            cvlr_assert!(false);
-            unreachable!();
+    impl<T> ::borsh0_9::BorshSerialize for NoResizableVec<T>
+    where
+        T: ::borsh0_9::BorshSerialize,
+    {
+        fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+            let len = self.len() as u32;
+            len.serialize(writer)?;
+            
+            for item in self.as_slice() {
+                item.serialize(writer)?;
+            }
+            
+            Ok(())
         }
     }
 
-    impl<T> ::borsh0_9::BorshDeserialize for NoResizableVec<T> {
-        // Not implemented
-        fn deserialize(_buf: &mut &[u8]) -> Result<Self> {
-            cvlr_assert!(false);
-            unreachable!();
+    impl<T> ::borsh0_9::BorshDeserialize for NoResizableVec<T>
+    where
+        T: ::borsh0_9::BorshDeserialize,
+    {
+        fn deserialize(buf: &mut &[u8]) -> Result<Self> {
+            let len = u32::deserialize(buf)? as usize;
+            let mut vec = NoResizableVec::with_capacity(len);
+            
+            for _ in 0..len {
+                let item = T::deserialize(buf)?;
+                vec.push(item);
+            }
+            
+            Ok(vec)
         }
     }
 }
@@ -266,25 +283,48 @@ pub mod borsh0_9 {
 pub mod borsh0_10 {
     use super::*;
 
-    impl<T> ::borsh0_10::BorshSerialize for NoResizableVec<T> {
-        // Not implemented
-        fn serialize<W: Write>(&self, _writer: &mut W) -> Result<()> {
-            cvlr_assert!(false);
-            unreachable!();
+    impl<T> ::borsh0_10::BorshSerialize for NoResizableVec<T>
+    where
+        T: ::borsh0_10::BorshSerialize,
+    {
+        fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+            let len = self.len() as u32;
+            len.serialize(writer)?;
+            
+            for item in self.as_slice() {
+                item.serialize(writer)?;
+            }
+            
+            Ok(())
         }
     }
 
-    impl<T> ::borsh0_10::BorshDeserialize for NoResizableVec<T> {
-        // Not implemented
-        fn deserialize(_buf: &mut &[u8]) -> Result<Self> {
-            cvlr_assert!(false);
-            unreachable!();
+    impl<T> ::borsh0_10::BorshDeserialize for NoResizableVec<T>
+    where
+        T: ::borsh0_10::BorshDeserialize,
+    {
+        fn deserialize(buf: &mut &[u8]) -> Result<Self> {
+            let len = u32::deserialize(buf)? as usize;
+            let mut vec = NoResizableVec::with_capacity(len);
+            
+            for _ in 0..len {
+                let item = T::deserialize(buf)?;
+                vec.push(item);
+            }
+            
+            Ok(vec)
         }
 
-        // Not implemented
-        fn deserialize_reader<R: Read>(_reader: &mut R) -> Result<Self> {
-            cvlr_assert!(false);
-            unreachable!();
+        fn deserialize_reader<R: Read>(reader: &mut R) -> Result<Self> {
+            let len = u32::deserialize_reader(reader)? as usize;
+            let mut vec = NoResizableVec::with_capacity(len);
+            
+            for _ in 0..len {
+                let item = T::deserialize_reader(reader)?;
+                vec.push(item);
+            }
+            
+            Ok(vec)
         }
     }
 }
