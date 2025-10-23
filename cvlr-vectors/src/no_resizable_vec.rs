@@ -12,6 +12,7 @@ use std::{
 /////////////////////////
 /// Raw Vec
 /////////////////////////
+#[derive(Debug, Eq, PartialEq)]
 struct RawVec<T> {
     ptr: NonNull<T>,
     cap: usize,
@@ -59,13 +60,26 @@ impl<T> Drop for RawVec<T> {
 /////////////////////////
 /// NoResizableVec
 /////////////////////////
+#[derive(Debug, Eq, PartialEq)]
 pub struct NoResizableVec<T> {
     buf: RawVec<T>,
     len: usize,
 }
 
+impl<T> Default for NoResizableVec<T>{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> NoResizableVec<T> {
-    pub fn new(capacity: usize) -> Self {
+    
+    pub fn new() -> Self {
+        //Set default capacity to 10
+        Self::with_capacity(10)
+    }
+
+    pub fn with_capacity(capacity: usize) -> Self {
         Self {
             buf: RawVec::new(capacity),
             len: 0,
@@ -140,6 +154,18 @@ impl<T> NoResizableVec<T> {
             }
         }
         None
+    }
+
+    pub fn as_slice(&self) -> &[T] {
+        unsafe {
+            std::slice::from_raw_parts(self.buf.ptr.as_ptr(), self.len)
+        }
+    }
+
+    pub fn as_mut_slice(&mut self) -> &mut [T] {
+        unsafe {
+            std::slice::from_raw_parts_mut(self.buf.ptr.as_mut(), self.len)
+        }
     }
 }
 
@@ -335,6 +361,36 @@ impl<T> IntoIterator for NoResizableVec<T> {
     }
 }
 
+impl<'a, T> IntoIterator for &'a NoResizableVec<T> {
+    type Item = &'a T;
+    type IntoIter = std::slice::Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_slice().iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut NoResizableVec<T> {
+    type Item = &'a mut T;
+    type IntoIter = std::slice::IterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.as_mut_slice().iter_mut()
+    }
+}
+
+
+impl<T> FromIterator<T> for NoResizableVec<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut vec = NoResizableVec::new();
+        for item in iter {
+            vec.push(item);
+        }
+        vec
+    }
+}
+
+
 ////////////////////
 // Macros
 ////////////////////
@@ -344,7 +400,7 @@ macro_rules! cvt_no_resizable_vec {
     ($(values:expr),+ $(,)?) => (
         {
             let ARG_COUNT: usize = 0 $(+ { _ = $values; 1 })*;
-            let mut v = $crate::no_resizable_vec::NoResizableVec::new(ARG_COUNT*2);
+            let mut v = $crate::no_resizable_vec::NoResizableVec::with_capacity(ARG_COUNT*2);
             $(v.push($values);)*
             v
         }
@@ -354,7 +410,7 @@ macro_rules! cvt_no_resizable_vec {
         {
             let ARG_COUNT: usize = 0 $(+ { _ = $values; 1 })*;
             cvlr::asserts::cvlr_assert!(ARG_COUNT <= $cap);
-            let mut v = $crate::no_resizable_vec::NoResizableVec::new($cap);
+            let mut v = $crate::no_resizable_vec::NoResizableVec::with_capacity($cap);
             $(v.push($values);)*
             v
         }
@@ -369,7 +425,7 @@ mod test {
 
     #[test]
     fn test_push_and_pop() {
-        let mut vec = NoResizableVec::new(3);
+        let mut vec = NoResizableVec::with_capacity(3);
         vec.push(1);
         vec.push(2);
         vec.push(3);
@@ -383,7 +439,7 @@ mod test {
 
     #[test]
     fn test_insert_and_remove() {
-        let mut vec = NoResizableVec::new(3);
+        let mut vec = NoResizableVec::with_capacity(3);
         vec.push(1);
         vec.push(3);
         vec.insert(1, 2);
@@ -401,7 +457,7 @@ mod test {
 
     #[test]
     fn test_find() {
-        let mut vec = NoResizableVec::new(3);
+        let mut vec = NoResizableVec::with_capacity(3);
         vec.push(10);
         vec.push(20);
         vec.push(30);
@@ -412,7 +468,7 @@ mod test {
 
     #[test]
     fn test_clone() {
-        let mut vec = NoResizableVec::new(3);
+        let mut vec = NoResizableVec::with_capacity(3);
         vec.push(1);
         vec.push(2);
         vec.push(3);
@@ -426,7 +482,7 @@ mod test {
 
     #[test]
     fn test_into_iter() {
-        let mut vec = NoResizableVec::new(3);
+        let mut vec = NoResizableVec::with_capacity(3);
         vec.push(1);
         vec.push(2);
         vec.push(3);
@@ -440,7 +496,7 @@ mod test {
 
     #[test]
     fn test_bin_search1() {
-        let mut vec: NoResizableVec<u64> = NoResizableVec::new(3);
+        let mut vec: NoResizableVec<u64> = NoResizableVec::with_capacity(3);
 
         vec.push(5);
         vec.push(15);
@@ -470,7 +526,7 @@ mod test {
 
     #[test]
     fn test_bin_search2() {
-        let mut vec: NoResizableVec<u64> = NoResizableVec::new(3);
+        let mut vec: NoResizableVec<u64> = NoResizableVec::with_capacity(3);
         vec.push(4);
         vec.push(7);
         vec.push(9);
@@ -499,7 +555,7 @@ mod test {
 
     #[test]
     pub fn test_bin_search3() {
-        let mut vec: NoResizableVec<u64> = NoResizableVec::new(3);
+        let mut vec: NoResizableVec<u64> = NoResizableVec::with_capacity(3);
 
         let v1: u64 = 5;
         let v2: u64 = 15;
@@ -533,8 +589,8 @@ mod test {
 
     #[test]
     fn test_bin_search4() {
-        let mut vec1: NoResizableVec<u64> = NoResizableVec::new(3);
-        let mut vec2: NoResizableVec<u64> = NoResizableVec::new(3);
+        let mut vec1: NoResizableVec<u64> = NoResizableVec::with_capacity(3);
+        let mut vec2: NoResizableVec<u64> = NoResizableVec::with_capacity(3);
 
         let v1: u64 = 5;
         let v2: u64 = 15;
