@@ -66,14 +66,13 @@ pub struct NoResizableVec<T> {
     len: usize,
 }
 
-impl<T> Default for NoResizableVec<T>{
+impl<T> Default for NoResizableVec<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
 impl<T> NoResizableVec<T> {
-    
     pub fn new() -> Self {
         //Set default capacity to 10
         Self::with_capacity(10)
@@ -157,15 +156,11 @@ impl<T> NoResizableVec<T> {
     }
 
     pub fn as_slice(&self) -> &[T] {
-        unsafe {
-            std::slice::from_raw_parts(self.buf.ptr.as_ptr(), self.len)
-        }
+        unsafe { std::slice::from_raw_parts(self.buf.ptr.as_ptr(), self.len) }
     }
 
     pub fn as_mut_slice(&mut self) -> &mut [T] {
-        unsafe {
-            std::slice::from_raw_parts_mut(self.buf.ptr.as_mut(), self.len)
-        }
+        unsafe { std::slice::from_raw_parts_mut(self.buf.ptr.as_mut(), self.len) }
     }
 }
 
@@ -379,7 +374,6 @@ impl<'a, T> IntoIterator for &'a mut NoResizableVec<T> {
     }
 }
 
-
 impl<T> FromIterator<T> for NoResizableVec<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut vec = NoResizableVec::new();
@@ -389,7 +383,6 @@ impl<T> FromIterator<T> for NoResizableVec<T> {
         vec
     }
 }
-
 
 ////////////////////
 // Macros
