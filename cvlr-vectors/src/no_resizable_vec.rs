@@ -77,6 +77,14 @@ impl<T> NoResizableVec<T> {
         //Set default capacity to 10
         Self::with_capacity(10)
     }
+    
+    #[deprecated]
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            buf: RawVec::new(capacity),
+            len: 0,
+        }
+    }
 
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
